@@ -6,7 +6,9 @@ import {
   getRedirectResult,
   signOut as fbSignOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  doc, getDoc, setDoc, serverTimestamp, terminate, clearIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db, googleProvider } from "./firebase.js";
 
 export function watchAuth(callback) {
@@ -29,8 +31,15 @@ export async function signInWithGoogle() {
   }
 }
 
-export function signOut() {
-  return fbSignOut(auth);
+// clearCache: also delete this device's offline copy of the data (Firestore can't be used
+// afterwards, so the caller reloads the page).
+export async function signOut({ clearCache = false } = {}) {
+  await fbSignOut(auth);
+  if (!clearCache) return;
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch { /* another tab still holds the cache; it is cleared on its next sign-out */ }
 }
 
 // "ok" | "denied" | "offline". Rules only allow the owner's account to read users/{uid}.

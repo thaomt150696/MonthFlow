@@ -4,7 +4,7 @@ Plan your month. Finish your week.
 
 MonthFlow is a calendar-first task manager for one person. Tasks live on a month and week calendar, sync across devices through Firebase, and keep working offline.
 
-**Status:** v0 — sign-in, access control and the app shell. Tasks arrive in v0.1.
+**Status:** v0.5. Full calendar UI, Google sign-in, access control and Firestore sync with offline support.
 
 ## Features (v1.0 roadmap)
 

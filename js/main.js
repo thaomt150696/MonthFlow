@@ -52,8 +52,14 @@ async function startApp() {
     });
   };
 
+  let appMounted = false;
   watchAuth(async (user) => {
-    if (!user) { showSignIn(); return; }
+    if (!user) {
+      if (appMounted) { location.reload(); return; } // signed out elsewhere or session ended
+      showSignIn();
+      return;
+    }
+    if (appMounted) return;
     render(splashView());
     const access = await checkAccess(user);
     if (access === "denied") {
@@ -61,11 +67,22 @@ async function startApp() {
       await signOut(); // triggers watchAuth(null), which shows the denied screen
       return;
     }
-    // Phase 4 replaces this in-memory store with the Firestore store.
-    const [{ mountApp }, { createMemoryStore }, { defaultProjects }] = await Promise.all([
-      import("./app.js"), import("./store/memory-store.js"), import("./sample-data.js")
-    ]);
-    mountApp(root, { store: createMemoryStore({ seed: () => ({ projects: defaultProjects(), tasks: [] }) }), user, onSignOut: () => signOut() });
+    const [{ mountApp }, { createFirestoreStore }] = await Promise.all([import("./app.js"), import("./store/firestore-store.js")]);
+    const store = createFirestoreStore(user.uid);
+    store.ensureDefaults();
+    await store.ready;
+    appMounted = true;
+    mountApp(root, {
+      store,
+      user,
+      onSignOut: async () => {
+        appMounted = false;
+        store.close();
+        render(splashView());
+        await signOut({ clearCache: true });
+        location.reload();
+      }
+    });
   });
 }
 
