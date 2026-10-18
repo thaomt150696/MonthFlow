@@ -1,0 +1,13 @@
+# Private project notes and design docs (kept local; repo is public)
+CLAUDE.md
+plan.md
+docs/
+.claude/
+
+# Local preview builds
+.preview/
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store

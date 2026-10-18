@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// MonthFlow: one owner, data under users/{uid}.
+// Before publishing in Firebase console > Firestore > Rules, replace OWNER_EMAIL
+// with the Google account that may use this workspace. Keep the real email out of the repo.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['OWNER_EMAIL'];
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /{document=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,52 @@
+/* MonthFlow design tokens · accent: forest · light theme (UI kit v0.1) */
+:root {
+  --mf-font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --mf-display: "Bricolage Grotesque", "Be Vietnam Pro", "Segoe UI", sans-serif;
+
+  /* neutrals */
+  --mf-canvas: #F4F5F7;
+  --mf-surface: #FFFFFF;
+  --mf-surface-2: #FAFAFB;
+  --mf-hover: #EEF0F3;
+  --mf-line: #E4E7EB;
+  --mf-line-strong: #CDD2D9;
+  --mf-ink: #15171C;
+  --mf-ink-2: #4B515C;
+  --mf-ink-3: #656C78;
+  --mf-ink-4: #8A919C;
+
+  /* accent */
+  --mf-accent: #1D6A4F;
+  --mf-accent-strong: #155540;
+  --mf-accent-soft: #E8F3EE;
+  --mf-accent-soft-2: #CFE6DA;
+  --mf-accent-text: #16573F;
+  --mf-on-accent: #FFFFFF;
+
+  /* semantic */
+  --mf-danger: #BF3328;
+  --mf-danger-soft: #FDEDEB;
+  --mf-warning: #875600;
+  --mf-warning-soft: #FFF3D9;
+  --mf-success: #22744A;
+
+  /* project colors: background tint / foreground */
+  --p-blue-bg: #E5EDFC;   --p-blue-fg: #2C5AB7;
+  --p-teal-bg: #DDF2EF;   --p-teal-fg: #18766E;
+  --p-green-bg: #E2F2E5;  --p-green-fg: #2C7641;
+  --p-amber-bg: #FBEFD3;  --p-amber-fg: #8F5E08;
+  --p-orange-bg: #FDE6D8; --p-orange-fg: #AE4C1C;
+  --p-rose-bg: #FBE5EB;   --p-rose-fg: #AD3859;
+  --p-violet-bg: #EDE7FA; --p-violet-fg: #6645B3;
+  --p-slate-bg: #EAEDF1;  --p-slate-fg: #4E5A6A;
+
+  /* shape */
+  --mf-r-sm: 6px;
+  --mf-r-md: 8px;
+  --mf-r-lg: 12px;
+  --mf-r-xl: 16px;
+  --mf-sh-1: 0 1px 2px rgba(21, 23, 28, .06);
+  --mf-sh-2: 0 6px 16px rgba(21, 23, 28, .08), 0 1px 3px rgba(21, 23, 28, .06);
+  --mf-sh-3: 0 18px 44px rgba(21, 23, 28, .18), 0 2px 6px rgba(21, 23, 28, .08);
+  --mf-ring: 0 0 0 3px var(--mf-accent-soft-2);
+}
