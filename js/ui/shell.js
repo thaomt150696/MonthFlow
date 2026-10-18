@@ -42,12 +42,13 @@ function monthGrid(cursor, today) {
     const inMonth = d.getMonth() === cursor.getMonth();
     const isToday = toISO(d) === todayISO;
     const showMonth = i === 0 || d.getDate() === 1;
-    const cls = ["cell", inMonth ? "" : "out", isToday ? "today" : "", i >= days.length - 7 ? "last-row" : ""].join(" ");
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const cls = ["cell", inMonth ? "" : "out", isWeekend ? "weekend" : "", isToday ? "today" : "", i >= days.length - 7 ? "last-row" : ""].join(" ");
     return `<div class="${cls}" data-date="${toISO(d)}">
       <div class="dl"><span class="dn">${d.getDate()}</span>${showMonth ? `<span class="mo">${MONTHS_SHORT[d.getMonth()]}</span>` : ""}${isToday ? '<span class="tdy">Today</span>' : ""}</div>
     </div>`;
   }).join("");
-  return `<div class="dow">${WEEKDAYS_SHORT.map((w) => `<div>${w}</div>`).join("")}</div>
+  return `<div class="dow">${WEEKDAYS_SHORT.map((w, i) => `<div${i >= 5 ? ' class="weekend"' : ""}>${w}</div>`).join("")}</div>
     <div class="mgrid" style="--rows:${rows}">${cells}</div>`;
 }
 

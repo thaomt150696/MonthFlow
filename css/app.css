@@ -105,6 +105,7 @@
 .cell.last-row { border-bottom: 0; }
 .cell.out { background: var(--mf-surface-2); }
 .cell.out .dn { color: var(--mf-ink-4); font-weight: 500; }
+.cell.weekend { background: var(--mf-weekend); }
 .cell.today { background: color-mix(in srgb, var(--mf-accent-soft) 55%, var(--mf-surface)); }
 .dl { display: flex; align-items: center; gap: 6px; height: 24px; flex: none; padding-left: 2px; }
 .dn {
