@@ -33,13 +33,27 @@ export function sidebarHTML(ctx) {
   const avatar = user.photoURL
     ? `<span class="avatar"><img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer"></span>`
     : `<span class="avatar">${initials(user)}</span>`;
+  if (ui.sideCollapsed) {
+    return `<aside class="side collapsed">
+      <div class="logo">${markSVG}</div>
+      <button class="ibtn side-toggle" data-action="toggle-side" aria-label="Expand sidebar" title="Expand sidebar ( [ )">${icons.sideOpen}</button>
+      <button class="btn primary new-task" id="newTaskBtn" data-action="new-task" aria-label="New task" title="New task (N)">${icons.plus}</button>
+      <button class="nav icon-only" data-action="go-calendar" aria-label="Calendar" title="Calendar" ${!ui.tray ? 'aria-current="page"' : ""}>${icons.calendar}</button>
+      <button class="nav icon-only" data-action="toggle-tray" aria-pressed="${ui.tray}" aria-label="Inbox, ${inboxCount} tasks" title="Inbox">${icons.inbox}${inboxCount ? `<span class="dot-count">${inboxCount}</span>` : ""}</button>
+      <span class="sep"></span>
+      ${data.projects.map((p) => `<button class="proj-dot pj-${p.color}" data-project-row="${p.id}" data-action="project-edit" data-id="${p.id}" aria-label="Edit ${esc(p.name)}" title="${esc(p.name)}"><i></i></button>`).join("")}
+      <button class="ibtn" id="addProjectBtn" data-action="project-new" aria-label="Add project" title="Add project">${icons.plus}</button>
+      <div class="account">${avatar}<button class="ibtn" data-action="settings-open" aria-label="Settings" title="Settings">${icons.gear}</button></div>
+    </aside>`;
+  }
   const projects = data.projects.map((p) => {
     const open = data.tasks.filter((t) => t.projectId === p.id && t.status !== "done").length;
     return `<div class="project-row pj-${p.color}" data-project-row="${p.id}"><i></i><span>${esc(p.name)}</span><small class="cnt">${open || ""}</small>
       <button class="ibtn" data-action="project-edit" data-id="${p.id}" aria-label="Edit ${esc(p.name)}">${icons.more}</button></div>`;
   }).join("");
   return `<aside class="side">
-    <div class="logo">${markSVG}MonthFlow</div>
+    <div class="logo">${markSVG}MonthFlow
+      <button class="ibtn side-toggle" data-action="toggle-side" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )">${icons.sideClose}</button></div>
     <button class="btn primary new-task" id="newTaskBtn" data-action="new-task">${icons.plus}New task<span class="kbd">N</span></button>
     <button class="nav" data-action="go-calendar" ${!ui.tray ? 'aria-current="page"' : ""}>${icons.calendar}Calendar</button>
     <button class="nav" data-action="toggle-tray" aria-pressed="${ui.tray}">${icons.inbox}Inbox<span class="count">${inboxCount}</span></button>
@@ -132,7 +146,7 @@ export function weekHTML(ctx) {
   const focus = data.tasks.filter((t) => t.focusWeek === key).sort(byCreated);
   const doneN = focus.filter((t) => t.status === "done").length;
   const pct = focus.length ? Math.round((doneN / focus.length) * 100) : 0;
-  const items = focus.map((t) => `<div class="fitem">${cardHTML(t, ctx.projectsById[t.projectId], ctx, { size: "lg", showDate: true })}
+  const items = focus.map((t) => `<div class="fitem">${cardHTML(t, ctx.projectsById[t.projectId], ctx, { size: "lg", showDate: true, noMenu: true })}
       <button class="ibtn unpin" data-action="unpin" data-id="${t.id}" aria-label="Remove from focus" title="Remove from focus">${icons.x}</button></div>`).join("");
   const slots = focus.length < FOCUS_MAX
     ? `<button class="slot" id="pinSlot" data-action="pin-slot">${icons.pin}Pin a task</button>` + '<div aria-hidden="true"></div>'.repeat(FOCUS_MAX - focus.length - 1)
@@ -186,7 +200,9 @@ export function panelHTML(ctx) {
   const opt = (map, cur) => Object.entries(map).map(([k, v]) => `<option value="${k}" ${k === cur ? "selected" : ""}>${v}</option>`).join("");
   const syncText = { synced: "Saved", syncing: "Saving…", offline: "Saved on this device", error: "Not saved" }[ui.sync];
   return `<aside class="dpanel" aria-label="Task details">
-    <div class="dp-h"><strong>Task details</strong><button class="ibtn" data-action="close-panel" aria-label="Close" title="Close (Esc)">${icons.x}</button></div>
+    <div class="dp-h"><strong>Task details</strong>
+      <button class="ibtn" data-action="delete-task" aria-label="Delete task" title="Delete task">${icons.trash}</button>
+      <button class="ibtn" data-action="close-panel" aria-label="Close" title="Close (Esc)">${icons.x}</button></div>
     <div class="dp-b">
       <div>
         <div class="dp-t pj-${color} ${t.status === "done" ? "is-done" : ""} ${t.status === "in_progress" ? "is-prog" : ""}">${checkbox(t, true)}

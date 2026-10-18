@@ -111,6 +111,20 @@ function dialogHTML(ctx) {
   </div>`;
 }
 
+function menuHTML(ctx) {
+  const m = ctx.ui.menu;
+  const t = m && ctx.data.tasks.find((x) => x.id === m.id);
+  if (!t) return "";
+  const done = t.status === "done";
+  return `<div class="pop menu" role="menu" aria-label="Task actions" data-pop="menu">
+    <button role="menuitem" id="menu-first" data-action="menu-open">${icons.open}Open details</button>
+    <button role="menuitem" data-action="menu-done">${icons.check}${done ? "Mark as not done" : "Mark as done"}</button>
+    ${t.scheduledDate ? `<button role="menuitem" data-action="menu-inbox">${icons.inbox}Move to Inbox</button>` : ""}
+    <hr>
+    <button role="menuitem" class="danger" data-action="menu-delete">${icons.trash}Delete task<kbd>Del</kbd></button>
+  </div>`;
+}
+
 function toastsHTML(ctx) {
   return `<div class="toasts" aria-live="polite">${ctx.ui.toasts.map((t) =>
     `<div class="toast ${t.kind === "error" ? "err" : ""}" role="${t.kind === "error" ? "alert" : "status"}">${t.kind === "error" ? icons.alert : ""}${esc(t.text)}
@@ -119,5 +133,5 @@ function toastsHTML(ctx) {
 }
 
 export function overlaysHTML(ctx) {
-  return quickAddHTML(ctx) + dayListHTML(ctx) + pickerHTML(ctx) + projectPopHTML(ctx) + settingsHTML(ctx) + dialogHTML(ctx) + toastsHTML(ctx);
+  return quickAddHTML(ctx) + dayListHTML(ctx) + menuHTML(ctx) + pickerHTML(ctx) + projectPopHTML(ctx) + settingsHTML(ctx) + dialogHTML(ctx) + toastsHTML(ctx);
 }

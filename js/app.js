@@ -27,8 +27,10 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     titleError: "",
     tray: false,
     focusCollapsed: !!prefs.focusCollapsed,
+    sideCollapsed: !!prefs.sideCollapsed,
     qa: null,
     dayList: null,
+    menu: null, // { id, x, y } from right-click, or { id } anchored to the card's ⋯ button
     picker: null,
     projectPop: null,
     settings: false,
@@ -99,8 +101,13 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
   function placePopovers() {
     const q = (s) => root.querySelector(s);
     const qaAnchor = ui.qa && (ui.qa.anchor === "day" ? q(`.cell[data-date="${ui.qa.date}"]`) || q(`.col[data-date="${ui.qa.date}"]`) : q("#newTaskBtn"));
+    const m = ui.menu;
+    const menuAnchor = m && (m.x != null
+      ? { getBoundingClientRect: () => ({ left: m.x, right: m.x, top: m.y, bottom: m.y }) }
+      : q(`.menu-btn[data-id="${m.id}"]`) || q(`.card[data-id="${m.id}"]`));
     const pops = [
       ["qa", qaAnchor, "side"],
+      ["menu", menuAnchor, "below"],
       ["daylist", ui.dayList && q(`.cell[data-date="${ui.dayList.date}"]`), "over"],
       ["picker", q("#pinSlot"), "below"],
       ["project", ui.projectPop && (ui.projectPop.id ? q(`[data-project-row="${ui.projectPop.id}"]`) : q("#addProjectBtn")), "side"]
@@ -153,7 +160,7 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
   function deleteTask(id) {
     const t = find(id);
     if (!t) return;
-    closePanelNow();
+    if (ui.selectedId === id) closePanelNow();
     run(() => store.removeTask(id));
     toast("Task deleted", { actionLabel: "Undo", action: () => run(() => store.putTask(t)) });
   }
@@ -350,11 +357,27 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     ui.dayList = null;
     ui.picker = null;
     ui.projectPop = null;
+    ui.menu = null;
+  }
+  function toggleSide() {
+    ui.sideCollapsed = !ui.sideCollapsed;
+    writePrefs({ ...readPrefs(), sideCollapsed: ui.sideCollapsed });
+  }
+  function openMenu(id, point) {
+    closeTransient();
+    ui.menu = point ? { id, x: point.x, y: point.y } : { id };
+    focusAfter = "menu-first";
+  }
+  // Runs a menu command on the task the menu was opened for.
+  function menuCommand(fn) {
+    const id = ui.menu && ui.menu.id;
+    ui.menu = null;
+    if (id) fn(id);
   }
   function handleEscape() {
     if (ui.dialog) { const d = ui.dialog; ui.dialog = null; d.onCancel && d.onCancel(); return true; }
     if (ui.qa) { requestCloseQA(); return true; }
-    if (ui.projectPop || ui.picker || ui.dayList) { closeTransient(); return true; }
+    if (ui.projectPop || ui.picker || ui.dayList || ui.menu) { closeTransient(); return true; }
     if (ui.settings) { ui.settings = false; return true; }
     if (ui.selectedId) { closePanel(); return true; }
     if (ui.tray) { ui.tray = false; return true; }
@@ -377,6 +400,12 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     "view-week": () => setView("week"),
     "toggle-tray": () => { ui.tray = !ui.tray; if (ui.tray) focusAfter = "inbox-new"; },
     "go-calendar": () => { ui.tray = false; },
+    "toggle-side": () => toggleSide(),
+    "card-menu": (el) => openMenu(el.dataset.id),
+    "menu-open": () => menuCommand(openTask),
+    "menu-done": () => menuCommand(toggleDone),
+    "menu-inbox": () => menuCommand((id) => moveTask(id, null)),
+    "menu-delete": () => menuCommand(deleteTask),
     "close-panel": () => closePanel(),
     "delete-task": () => deleteTask(ui.selectedId),
     "focus-toggle": () => toggleFocus(ui.selectedId),
@@ -410,7 +439,7 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     const el = e.target.closest("[data-action]");
     const action = el && el.dataset.action;
     // A click outside a light popover closes it and is not passed on (checkboxes and toasts still work).
-    if (!e.target.closest("[data-pop]") && !ui.dialog && (ui.qa || ui.dayList || ui.picker || ui.projectPop)) {
+    if (!e.target.closest("[data-pop]") && !ui.dialog && (ui.qa || ui.dayList || ui.picker || ui.projectPop || ui.menu)) {
       const passThrough = action === "toggle" || action === "toast-action" || action === "toast-close";
       if (ui.qa) requestCloseQA();
       closeTransient();
@@ -486,6 +515,18 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     else if (el.id === "inbox-new" && e.key === "Enter") { e.preventDefault(); addInbox(el.value); }
     else if (el.id === "qa-notes" && e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submitQA(); }
     else if (el.classList.contains("card") && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openTask(el.dataset.id); render(); }
+    else if (el.classList.contains("card") && (e.key === "Delete" || e.key === "Backspace")) { e.preventDefault(); deleteTask(el.dataset.id); render(); }
+    else if (el.classList.contains("card") && (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10"))) { e.preventDefault(); openMenu(el.dataset.id); render(); }
+  });
+
+  // Right-click on any task card opens its action menu.
+  root.addEventListener("contextmenu", (e) => {
+    const card = e.target.closest(".card[data-id]");
+    if (!card || ui.dialog) return;
+    e.preventDefault();
+    if (ui.qa) { requestCloseQA(); render(); return; }
+    openMenu(card.dataset.id, { x: e.clientX, y: e.clientY });
+    render();
   });
 
   document.addEventListener("keydown", (e) => {
@@ -498,6 +539,7 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     else if (k === "t") ui.cursor = today;
     else if (k === "m") setView("month");
     else if (k === "w") setView("week");
+    else if (e.key === "[") toggleSide();
     else if (e.key === "ArrowLeft") move(-1);
     else if (e.key === "ArrowRight") move(1);
     else return;

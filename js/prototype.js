@@ -33,6 +33,8 @@ function mountControls(store) {
           <li>Tick checkbox để hoàn thành, tick lại để hoàn tác</li>
           <li>Kéo thẻ sang ngày khác</li>
           <li>Bấm vào thẻ để mở Task details</li>
+          <li>Xóa task: chuột phải vào thẻ, nút ⋯ trên thẻ ở Week/Inbox, phím Delete, hoặc nút thùng rác trong Task details</li>
+          <li>Thu gọn menu trái: nút cạnh chữ MonthFlow hoặc phím [</li>
           <li>Bấm Inbox, kéo task vào lịch</li>
           <li>Chuyển sang Week, ghim Weekly Focus</li>
           <li>Phím tắt: N, T, M, W, ← →, Esc</li>

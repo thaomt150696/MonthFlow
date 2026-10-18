@@ -158,13 +158,45 @@ input[type="date"].input::-webkit-calendar-picker-indicator { cursor: pointer; o
 .card.is-done .tt { color: var(--mf-ink-3); text-decoration: line-through; text-decoration-color: var(--mf-ink-4); }
 .card.is-sel { box-shadow: 0 0 0 2px var(--mf-accent); }
 .card.is-dragging { opacity: .35; }
-.card.lg { padding: 8px 10px 9px 3px; gap: 3px; border-radius: var(--mf-r-md); font-size: 13.5px; line-height: 18px; }
-.card.lg .cb { margin: -7px 0; }
-.card.lg .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.card.lg .tt { padding-top: 0; }
+/* Large card: checkbox + title on row 1; meta on row 2 uses the full card width (narrow Week columns). */
+.card.lg {
+  display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 3px; row-gap: 6px; align-items: start;
+  padding: 8px 10px 9px 3px; border-radius: var(--mf-r-md); font-size: 13.5px; line-height: 18px;
+}
+.card.lg .cb { margin: -7px 0; grid-row: 1; grid-column: 1; }
+.card.lg .body { display: contents; }
+.card.lg .tt { padding-top: 0; grid-row: 1; grid-column: 2; }
+.card.lg .meta { grid-row: 2; grid-column: 1 / -1; padding-left: 9px; }
 .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font: 500 12px/16px var(--mf-font); color: var(--mf-ink-2); }
+.meta > * { min-width: 0; max-width: 100%; }
+.meta .bt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .meta .pd { display: inline-flex; align-items: center; gap: 5px; }
-.meta .pd i { width: 8px; height: 8px; border-radius: 2.5px; background: var(--pfg); }
+.meta .pd i { width: 8px; height: 8px; border-radius: 2.5px; background: var(--pfg); flex: none; }
+.meta .badge { max-width: 100%; overflow: hidden; }
+.meta .badge .ico { flex: none; }
+
+/* card action button (large cards) */
+.card .menu-btn {
+  position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px;
+  display: grid; place-items: center; background: var(--pbg); color: var(--mf-ink-2); opacity: 0; transition: opacity .12s;
+}
+.card.is-done .menu-btn { background: color-mix(in srgb, var(--pbg) 45%, var(--mf-surface)); }
+.card:hover .menu-btn, .card:focus-within .menu-btn, .card .menu-btn:focus-visible { opacity: 1; }
+.card .menu-btn:hover { color: var(--mf-ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pfg) 35%, transparent); }
+.card .menu-btn .ico { width: 16px; height: 16px; }
+
+/* action menu */
+.menu { width: 224px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.menu button {
+  display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: 0; background: none;
+  border-radius: 7px; font: 500 13.5px/1 var(--mf-font); color: var(--mf-ink); text-align: left;
+}
+.menu button:hover, .menu button:focus-visible { background: var(--mf-hover); outline: none; }
+.menu button .ico { width: 16px; height: 16px; color: var(--mf-ink-3); }
+.menu .danger, .menu .danger .ico { color: var(--mf-danger); }
+.menu .danger:hover, .menu .danger:focus-visible { background: var(--mf-danger-soft); }
+.menu kbd { margin-left: auto; font: 500 11.5px/1 var(--mf-font); color: inherit; opacity: .7; }
+.menu hr { border: 0; height: 1px; background: var(--mf-line); margin: 4px 2px; }
 .badge.prog { background: var(--mf-surface); color: var(--mf-ink); box-shadow: inset 0 0 0 1px var(--mf-line-strong); }
 .badge.over { background: var(--mf-danger-soft); color: var(--mf-danger); }
 
