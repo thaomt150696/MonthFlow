@@ -63,6 +63,8 @@ export function signInErrorMessage(err) {
     case "auth/network-request-failed": return "No internet connection. Check your network and try again.";
     case "auth/unauthorized-domain": return "This address isn’t allowed to sign in yet. Add it under Authentication › Settings › Authorized domains in Firebase.";
     case "auth/operation-not-allowed": return "Google sign-in is turned off for this Firebase project. Turn it on under Authentication › Sign-in method.";
+    case "auth/configuration-not-found": return "Authentication isn’t set up in Firebase yet. Open Authentication, click Get started, then enable Google.";
+    case "auth/popup-blocked": return "The sign-in window was blocked. Allow pop-ups for this site and try again.";
     default: return "Couldn’t sign in. Try again in a moment.";
   }
 }
