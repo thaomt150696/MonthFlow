@@ -1,6 +1,7 @@
 // Task and project shapes, labels and validation rules.
 import { newId } from "./lib/id.js";
 
+export const APP_VERSION = "1.0.0";
 export const PROJECT_COLORS = ["blue", "teal", "green", "amber", "orange", "rose", "violet", "slate"];
 export const STATUS_LABEL = { todo: "Todo", in_progress: "In progress", done: "Done" };
 export const PRIORITY_LABEL = { low: "Low", medium: "Medium", high: "High" };

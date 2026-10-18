@@ -33,7 +33,8 @@ export function sidebarHTML(ctx) {
   const avatar = user.photoURL
     ? `<span class="avatar"><img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer"></span>`
     : `<span class="avatar">${initials(user)}</span>`;
-  if (ui.sideCollapsed) {
+  // Narrow windows (< 1024px): icon rail by default; expanding opens the full sidebar over the calendar.
+  if (ui.narrow ? !ui.sideOpenNarrow : ui.sideCollapsed) {
     return `<aside class="side collapsed">
       <div class="logo">${markSVG}</div>
       <button class="ibtn side-toggle" data-action="toggle-side" aria-label="Expand sidebar" title="Expand sidebar ( [ )">${icons.sideOpen}</button>
@@ -51,7 +52,7 @@ export function sidebarHTML(ctx) {
     return `<div class="project-row pj-${p.color}" data-project-row="${p.id}"><i></i><span>${esc(p.name)}</span><small class="cnt">${open || ""}</small>
       <button class="ibtn" data-action="project-edit" data-id="${p.id}" aria-label="Edit ${esc(p.name)}">${icons.more}</button></div>`;
   }).join("");
-  return `<aside class="side">
+  return `<aside class="side ${ui.narrow ? "overlay" : ""}">
     <div class="logo">${markSVG}MonthFlow
       <button class="ibtn side-toggle" data-action="toggle-side" aria-label="Collapse sidebar" title="Collapse sidebar ( [ )">${icons.sideClose}</button></div>
     <button class="btn primary new-task" id="newTaskBtn" data-action="new-task">${icons.plus}New task<span class="kbd">N</span></button>
@@ -238,7 +239,7 @@ export function panelHTML(ctx) {
 export function appHTML(ctx) {
   const { ui } = ctx;
   const panel = panelHTML(ctx);
-  return `<div class="app ${panel ? "has-panel" : ""} ${ui.tray ? "has-tray" : ""}">
+  return `<div class="app ${panel ? "has-panel" : ""} ${ui.tray ? "has-tray" : ""} ${ui.narrow ? "narrow" : ""} ${ui.narrow && ui.sideOpenNarrow ? "side-open" : ""}">
     ${sidebarHTML(ctx)}
     ${trayHTML(ctx)}
     <div class="main">${headerHTML(ctx)}${bannerHTML(ctx)}${ui.view === "month" ? monthHTML(ctx) : weekHTML(ctx)}</div>

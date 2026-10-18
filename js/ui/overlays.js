@@ -3,7 +3,7 @@ import { icons } from "./icons.js";
 import { cardHTML } from "./card.js";
 import { esc } from "../lib/html.js";
 import { fmtShort, fmtDayMonth, weekDays, toISO, weekKey } from "../lib/date.js";
-import { byCreated, PROJECT_COLORS, TITLE_MAX } from "../model.js";
+import { byCreated, PROJECT_COLORS, TITLE_MAX, APP_VERSION } from "../model.js";
 import { syncBadge } from "./views.js";
 
 function quickAddHTML(ctx) {
@@ -83,7 +83,7 @@ function settingsHTML(ctx) {
   const syncLine = { synced: "All changes are synced.", syncing: "Syncing your latest changes…", offline: "You’re offline. Changes are saved on this device.", error: "Some changes weren’t saved. Try again." }[ui.sync];
   return `<div class="scrim" data-action="settings-close"></div>
   <div class="modal" role="dialog" aria-modal="true" aria-label="Settings" data-pop="settings">
-    <div class="m-h"><strong>Settings</strong><button class="ibtn" data-action="settings-close" aria-label="Close">${icons.x}</button></div>
+    <div class="m-h"><strong>Settings</strong><button class="ibtn" id="settingsClose" data-action="settings-close" aria-label="Close">${icons.x}</button></div>
     <section class="m-sec"><h3>Account</h3>
       <div class="m-row"><span class="avatar">${esc((user.displayName || user.email || "?").charAt(0).toUpperCase())}</span>
         <span class="grow"><b>${esc(user.displayName || "Signed in")}</b>${esc(user.email || "")}</span>
@@ -97,6 +97,33 @@ function settingsHTML(ctx) {
         <input type="file" id="importFile" accept="application/json,.json" hidden></div>
     </section>
     <section class="m-sec"><h3>Sync</h3><div class="m-row"><span class="grow">${syncLine}</span>${syncBadge(ui.sync)}</div></section>
+    <section class="m-sec"><h3>About</h3>
+      <div class="m-row"><span class="grow">MonthFlow ${APP_VERSION}. After an update, press Ctrl+F5 if you still see the old version.</span>
+        <button class="btn secondary sm" data-action="shortcuts-open">Keyboard shortcuts</button></div>
+    </section>
+  </div>`;
+}
+
+const SHORTCUTS = [
+  ["N", "New task"],
+  ["T", "Go to today"],
+  ["M / W", "Month view / Week view"],
+  ["← / →", "Previous / next month or week"],
+  ["[", "Collapse or expand the sidebar"],
+  ["Enter", "Create the task (in New task)"],
+  ["Ctrl + Enter", "Create the task from Notes"],
+  ["Esc", "Close the open panel, menu or dialog"],
+  ["Delete", "Delete the selected task (with Undo)"],
+  ["Shift + F10", "Open the selected task’s menu"],
+  ["?", "Show this list"]
+];
+
+function shortcutsHTML(ctx) {
+  if (!ctx.ui.shortcuts) return "";
+  return `<div class="scrim" data-action="shortcuts-close"></div>
+  <div class="modal sm" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" data-pop="shortcuts">
+    <div class="m-h"><strong>Keyboard shortcuts</strong><button class="ibtn" id="shortcutsClose" data-action="shortcuts-close" aria-label="Close">${icons.x}</button></div>
+    <dl class="keys">${SHORTCUTS.map(([k, v]) => `<dt><span class="kbd light">${esc(k)}</span></dt><dd>${esc(v)}</dd>`).join("")}</dl>
   </div>`;
 }
 
@@ -133,5 +160,5 @@ function toastsHTML(ctx) {
 }
 
 export function overlaysHTML(ctx) {
-  return quickAddHTML(ctx) + dayListHTML(ctx) + menuHTML(ctx) + pickerHTML(ctx) + projectPopHTML(ctx) + settingsHTML(ctx) + dialogHTML(ctx) + toastsHTML(ctx);
+  return quickAddHTML(ctx) + dayListHTML(ctx) + menuHTML(ctx) + pickerHTML(ctx) + projectPopHTML(ctx) + settingsHTML(ctx) + shortcutsHTML(ctx) + dialogHTML(ctx) + toastsHTML(ctx);
 }

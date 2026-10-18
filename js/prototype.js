@@ -37,7 +37,7 @@ function mountControls(store) {
           <li>Thu gọn menu trái: nút cạnh chữ MonthFlow hoặc phím [</li>
           <li>Bấm Inbox, kéo task vào lịch</li>
           <li>Chuyển sang Week, ghim Weekly Focus</li>
-          <li>Phím tắt: N, T, M, W, ← →, Esc</li>
+          <li>Phím tắt: N, T, M, W, ← →, Esc. Bấm ? để xem đủ</li>
         </ul>
         <div class="proto-actions">
           <button class="btn secondary sm" data-p="offline" aria-pressed="${!store.isOnline()}">${store.isOnline() ? "Giả lập mất mạng" : "Có mạng trở lại"}</button>

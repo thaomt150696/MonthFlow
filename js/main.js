@@ -101,5 +101,8 @@ async function startApp() {
   }
 }
 
-if (isConfigured) startApp();
+// Local development can still open the previews with ?preview (never on the live site).
+const forcePreview = location.hostname === "localhost" && new URLSearchParams(location.search).has("preview");
+
+if (isConfigured && !forcePreview) startApp();
 else startPreview();

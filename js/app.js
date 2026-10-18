@@ -19,6 +19,7 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const todayISO = toISO(today);
   const prefs = readPrefs();
+  const narrowQuery = matchMedia("(max-width: 1023px)");
 
   const ui = {
     view: prefs.view === "week" ? "week" : "month",
@@ -28,6 +29,9 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     tray: false,
     focusCollapsed: !!prefs.focusCollapsed,
     sideCollapsed: !!prefs.sideCollapsed,
+    narrow: narrowQuery.matches,
+    sideOpenNarrow: false,
+    shortcuts: false,
     qa: null,
     dayList: null,
     menu: null, // { id, x, y } from right-click, or { id } anchored to the card's ⋯ button
@@ -373,6 +377,7 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     ui.menu = null;
   }
   function toggleSide() {
+    if (ui.narrow) { ui.sideOpenNarrow = !ui.sideOpenNarrow; return; }
     ui.sideCollapsed = !ui.sideCollapsed;
     writePrefs({ ...readPrefs(), sideCollapsed: ui.sideCollapsed });
   }
@@ -391,7 +396,9 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     if (ui.dialog) { const d = ui.dialog; ui.dialog = null; d.onCancel && d.onCancel(); return true; }
     if (ui.qa) { requestCloseQA(); return true; }
     if (ui.projectPop || ui.picker || ui.dayList || ui.menu) { closeTransient(); return true; }
+    if (ui.shortcuts) { ui.shortcuts = false; return true; }
     if (ui.settings) { ui.settings = false; return true; }
+    if (ui.narrow && ui.sideOpenNarrow) { ui.sideOpenNarrow = false; return true; }
     if (ui.selectedId) { closePanel(); return true; }
     if (ui.tray) { ui.tray = false; return true; }
     return false;
@@ -437,8 +444,10 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     "project-color": (el) => { ui.projectPop.draft.color = el.dataset.value; },
     "project-cancel": () => { ui.projectPop = null; },
     "project-delete": () => confirmDeleteProject(),
-    "settings-open": () => { closeTransient(); ui.settings = true; },
+    "settings-open": () => { closeTransient(); ui.settings = true; focusAfter = "settingsClose"; },
     "settings-close": () => { ui.settings = false; },
+    "shortcuts-open": () => { closeTransient(); ui.settings = false; ui.shortcuts = true; focusAfter = "shortcutsClose"; },
+    "shortcuts-close": () => { ui.shortcuts = false; },
     export: () => exportData(),
     "sign-out": () => { ui.settings = false; if (onSignOut) onSignOut(); },
     "toast-action": (el) => { const t = ui.toasts.find((x) => x.id === el.dataset.id); dismissToast(el.dataset.id); if (t && t.action) t.action(); },
@@ -458,8 +467,12 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
       closeTransient();
       if (!passThrough) { render(); return; }
     }
+    // Narrow window: the expanded sidebar floats; a click outside closes it.
+    const inSide = !!e.target.closest(".side");
+    if (ui.narrow && ui.sideOpenNarrow && !inSide) { ui.sideOpenNarrow = false; render(); return; }
     if (!el || !actions[action]) return;
     actions[action](el);
+    if (ui.narrow && inSide && !["toggle-side", "project-new", "project-edit"].includes(action)) ui.sideOpenNarrow = false;
     render();
   });
 
@@ -546,9 +559,10 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
     if (!root.isConnected) return;
     if (e.key === "Escape") { if (handleEscape()) { e.preventDefault(); render(); } return; }
     const typing = e.target.closest && e.target.closest("input, textarea, select, [contenteditable]");
-    if (typing || e.ctrlKey || e.metaKey || e.altKey || ui.dialog || ui.settings || ui.qa || ui.projectPop) return;
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || ui.dialog || ui.settings || ui.shortcuts || ui.qa || ui.projectPop) return;
     const k = e.key.toLowerCase();
-    if (k === "n") { e.preventDefault(); openQA(null, "button"); }
+    if (e.key === "?") { e.preventDefault(); closeTransient(); ui.shortcuts = true; focusAfter = "shortcutsClose"; }
+    else if (k === "n") { e.preventDefault(); openQA(null, "button"); }
     else if (k === "t") ui.cursor = today;
     else if (k === "m") setView("month");
     else if (k === "w") setView("week");
@@ -568,7 +582,16 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
   };
   document.addEventListener("pointerup", release, true);
   document.addEventListener("pointercancel", release, true);
-  window.addEventListener("resize", () => placePopovers());
+  // Re-check the narrow breakpoint on every resize too: some browsers skip the media query change event.
+  const syncNarrow = () => {
+    if (narrowQuery.matches === ui.narrow) return false;
+    ui.narrow = narrowQuery.matches;
+    ui.sideOpenNarrow = false;
+    requestRender();
+    return true;
+  };
+  window.addEventListener("resize", () => { if (!syncNarrow()) placePopovers(); });
+  narrowQuery.addEventListener("change", syncNarrow);
   root.addEventListener("scroll", (e) => {
     if (e.target.classList && e.target.classList.contains("content")) { markScrolled(); placePopovers(); }
   }, true);
