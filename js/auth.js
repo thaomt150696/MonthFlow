@@ -7,7 +7,7 @@ import {
   signOut as fbSignOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  doc, getDoc, setDoc, serverTimestamp, terminate, clearIndexedDbPersistence
+  doc, getDocFromServer, setDoc, serverTimestamp, terminate, clearIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { auth, db, googleProvider } from "./firebase.js";
 
@@ -42,19 +42,27 @@ export async function signOut({ clearCache = false } = {}) {
   } catch { /* another tab still holds the cache; it is cleared on its next sign-out */ }
 }
 
-// "ok" | "denied" | "offline". Rules only allow the owner's account to read users/{uid}.
+const SERVER_CHECK_MS = 12000;
+
+// "ok" | "denied" | "offline" | "unreachable". Rules only allow the owner's account to read users/{uid}.
+// Asks the server (not the local cache), so a missing database or blocked connection is noticed
+// at sign-in instead of showing "Syncing…" forever.
 export async function checkAccess(user) {
   const ref = doc(db, "users", user.uid);
   try {
-    const snap = await getDoc(ref);
+    const snap = await Promise.race([
+      getDocFromServer(ref),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), SERVER_CHECK_MS))
+    ]);
     const profile = { email: user.email, name: user.displayName || "", lastSeenAt: serverTimestamp() };
     if (!snap.exists()) profile.createdAt = serverTimestamp();
     // Fire and forget: offline writes resolve only after the server acknowledges them.
     setDoc(ref, profile, { merge: true }).catch(() => {});
     return "ok";
   } catch (err) {
-    if (err.code === "permission-denied") return "denied";
-    return "offline";
+    const setupProblem = /has not been used|is disabled|does not exist/i.test(err.message || "");
+    if (err.code === "permission-denied" && !setupProblem) return "denied";
+    return navigator.onLine ? "unreachable" : "offline";
   }
 }
 

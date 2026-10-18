@@ -1,6 +1,6 @@
 // Entry point: decides which screen to show and wires up events.
 import { isConfigured } from "./firebase-config.js";
-import { splashView, setupView, signInView, deniedView } from "./ui/screens.js";
+import { splashView, setupView, signInView, deniedView, connectionErrorView } from "./ui/screens.js";
 
 const root = document.getElementById("app");
 
@@ -60,6 +60,10 @@ async function startApp() {
       return;
     }
     if (appMounted) return;
+    await verifyAndOpen(user);
+  });
+
+  async function verifyAndOpen(user) {
     render(splashView());
     const access = await checkAccess(user);
     if (access === "denied") {
@@ -67,6 +71,17 @@ async function startApp() {
       await signOut(); // triggers watchAuth(null), which shows the denied screen
       return;
     }
+    if (access === "unreachable") {
+      render(connectionErrorView());
+      root.querySelector("#retryBtn").addEventListener("click", () => verifyAndOpen(user));
+      root.querySelector("#offlineBtn").addEventListener("click", () => openApp(user));
+      return;
+    }
+    await openApp(user); // "ok", or "offline": work from this device's copy and sync later
+  }
+
+  async function openApp(user) {
+    render(splashView());
     const [{ mountApp }, { createFirestoreStore }] = await Promise.all([import("./app.js"), import("./store/firestore-store.js")]);
     const store = createFirestoreStore(user.uid);
     store.ensureDefaults();
@@ -83,7 +98,7 @@ async function startApp() {
         location.reload();
       }
     });
-  });
+  }
 }
 
 if (isConfigured) startApp();
