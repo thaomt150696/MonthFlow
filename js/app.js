@@ -48,13 +48,26 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
   const ctx = () => ({ data, ui, user, todayISO, projectsById: Object.fromEntries(data.projects.map((p) => [p.id, p])) });
 
   /* ---------- rendering ---------- */
+  const SCROLLERS = [".content", ".tray-b", ".dp-b", ".daylist"];
+  let scrollView = null; // calendar scroll only carries over within the same month/week view
+
   function render() {
     pendingRender = false;
     const focus = captureFocus();
+    const view = ui.view + ":" + (ui.view === "month" ? ui.cursor.getFullYear() + "-" + ui.cursor.getMonth() : weekKey(ui.cursor));
+    const scrolls = SCROLLERS.map((s) => { const el = root.querySelector(s); return el ? el.scrollTop : 0; });
+    if (view !== scrollView) scrolls[0] = 0;
+    scrollView = view;
     const c = ctx();
     root.innerHTML = appHTML(c) + overlaysHTML(c);
+    SCROLLERS.forEach((s, i) => { const el = root.querySelector(s); if (el && scrolls[i]) el.scrollTop = scrolls[i]; });
+    markScrolled();
     restoreFocus(focus);
     placePopovers();
+  }
+  function markScrolled() {
+    const el = root.querySelector(".content");
+    if (el) el.classList.toggle("is-scrolled", el.scrollTop > 0);
   }
   // Store and sync events can arrive mid-click or mid-drag; wait so the click still lands.
   function requestRender() {
@@ -556,6 +569,9 @@ export function mountApp(root, { store, user, onSignOut, canDownload = true }) {
   document.addEventListener("pointerup", release, true);
   document.addEventListener("pointercancel", release, true);
   window.addEventListener("resize", () => placePopovers());
+  root.addEventListener("scroll", (e) => {
+    if (e.target.classList && e.target.classList.contains("content")) { markScrolled(); placePopovers(); }
+  }, true);
 
   /* ---------- drag and drop ---------- */
   function setDrop(el) {

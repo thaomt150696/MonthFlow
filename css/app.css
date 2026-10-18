@@ -127,10 +127,15 @@
 .hint b { color: var(--mf-ink); }
 
 /* ---------- month grid ---------- */
+/* Weekday row stays pinned to the top of the calendar while it scrolls. */
 .dow {
+  position: sticky; top: -14px; z-index: 6; background: var(--mf-surface); /* -14px = .content padding-top, so it sits flush */
+  box-sizing: content-box; padding-top: 14px; margin-top: -14px;
   display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); height: 30px; flex: none; align-items: center; padding-left: 10px;
   font: 600 11px/14px var(--mf-font); letter-spacing: .07em; text-transform: uppercase; color: var(--mf-ink-3);
+  transition: box-shadow .15s;
 }
+.content.is-scrolled .dow { box-shadow: 0 1px 0 var(--mf-line), 0 4px 8px -4px rgba(21, 23, 28, .12); }
 .mgrid {
   flex: 1 0 auto; display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 5), minmax(112px, 1fr));
