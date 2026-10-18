@@ -1,37 +1,30 @@
 // Entry point: decides which screen to show and wires up events.
 import { isConfigured } from "./firebase-config.js";
 import { splashView, setupView, signInView, deniedView } from "./ui/screens.js";
-import { shellView } from "./ui/shell.js";
 
 const root = document.getElementById("app");
-const today = new Date();
-let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
 
 function render(html) {
   root.innerHTML = html;
 }
 
-function renderShell(user, onSignOut) {
-  render(shellView({ user, cursor, today }));
-  const moveMonth = (n) => { cursor = new Date(cursor.getFullYear(), cursor.getMonth() + n, 1); renderShell(user, onSignOut); };
-  root.querySelector("#prevBtn").addEventListener("click", () => moveMonth(-1));
-  root.querySelector("#nextBtn").addEventListener("click", () => moveMonth(1));
-  root.querySelector("#todayBtn").addEventListener("click", () => { cursor = new Date(today.getFullYear(), today.getMonth(), 1); renderShell(user, onSignOut); });
-  root.querySelector("#signOutBtn").addEventListener("click", onSignOut);
-}
-
 // Without Firebase config: setup screen plus local previews of each screen.
 function startPreview() {
-  const fakeUser = { displayName: "Preview user", email: "preview@example.com", photoURL: "" };
+  let prototypeStarted = false;
   const show = () => {
     const h = location.hash;
+    if (h === "#preview-app") {
+      if (prototypeStarted) { location.reload(); return; }
+      prototypeStarted = true;
+      import("./prototype.js").then((m) => m.startPrototype(root, { onSignOut: () => { location.hash = "#preview-signin"; } }));
+      return;
+    }
+    if (prototypeStarted) { location.reload(); return; }
     if (h === "#preview-signin") {
       render(signInView());
       root.querySelector("#signInBtn").addEventListener("click", () => render(signInView({ error: "Firebase isn’t configured yet, so sign-in is only a preview." })));
     } else if (h === "#preview-denied") {
       render(deniedView({ email: "other.person@gmail.com" }));
-    } else if (h === "#preview-app") {
-      renderShell(fakeUser, () => { location.hash = "#preview-signin"; });
     } else {
       render(setupView());
     }
@@ -68,7 +61,11 @@ async function startApp() {
       await signOut(); // triggers watchAuth(null), which shows the denied screen
       return;
     }
-    renderShell(user, () => signOut());
+    // Phase 4 replaces this in-memory store with the Firestore store.
+    const [{ mountApp }, { createMemoryStore }, { defaultProjects }] = await Promise.all([
+      import("./app.js"), import("./store/memory-store.js"), import("./sample-data.js")
+    ]);
+    mountApp(root, { store: createMemoryStore({ seed: () => ({ projects: defaultProjects(), tasks: [] }) }), user, onSignOut: () => signOut() });
   });
 }
 

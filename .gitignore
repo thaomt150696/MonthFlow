@@ -4,8 +4,9 @@ plan.md
 docs/
 .claude/
 
-# Local preview builds
+# Local preview builds and prototype bundling
 .preview/
+tools/
 
 # OS files
 Thumbs.db
